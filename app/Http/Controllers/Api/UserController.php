@@ -48,17 +48,25 @@ class UserController extends Controller
         return response()->json(['message' => "Deleted"], Response::HTTP_OK);
     }
 
-    public function login(Request $request)
-    {
-        $credentials = $request->only('email', 'password');
-        
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            return response()->json(['user' => $user]);
-        } else {
-            return response()->json(['message' => 'Unauthorized'], Response::HTTP_OK);
+    public function login(Request $request){
+        $credentials = $request -> validate([
+         'email' => 'required | email',
+         'password'=> 'required',
+        ]);
+        if(Auth::attempt($credentials)){
+         $user=Auth::user();
+         $token = $user->createToken($user->id)->plainTextToken;
+         $user ->forceFill([
+             'api_token' => $token,
+         ])->save();
+         return response()->json([
+             'token' => $token
+         ]);
         }
-    }
+        return response()->json([
+         'message'=>'The provided credentials do not match our records.'
+        ]);
+     }
     
    
 }
